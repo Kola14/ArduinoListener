@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.IO.Ports;
 using System.Threading;
 
@@ -12,6 +13,7 @@ namespace ArduinoListener
         private readonly SerialPort serialPort;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+        public event EventHandler<ErrorEventArgs> Error;
 
         public SerialPortListener(string portName, int baudRate)
         {
@@ -30,10 +32,17 @@ namespace ArduinoListener
 
         private void Listen()
         {
-            while (serialPort.IsOpen)
+            try
             {
-                string message = serialPort.ReadLine();
-                MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
+                while (serialPort.IsOpen)
+                {
+                    string message = serialPort.ReadLine();
+                    MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
+                }
+            }
+            catch(IOException ex)
+            {
+                Error?.Invoke(this, new ErrorEventArgs(ex.Message));
             }
         }
 
